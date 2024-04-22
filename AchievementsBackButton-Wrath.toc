@@ -1,4 +1,4 @@
-## Interface: 100206
+## Interface: 30403
 ## Version: @project-version@
 ## Title: Achievements Back Button
 ## Author: LudiusMaximus
@@ -9,4 +9,3 @@
 ## X-License: The MIT License (MIT)
 
 main.lua
-
