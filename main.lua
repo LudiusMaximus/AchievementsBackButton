@@ -1,4 +1,3 @@
-
 local started = false
 
 local history = {}
@@ -29,22 +28,34 @@ AchievmentsBack = function()
   lastAchievementID = nil
 
   -- for k, v in pairs(history) do
-    -- print ("  ", k, v[1], v[2], v[3])
+    -- print("  ", k, v[1], v[2], v[3], v[4], v[5])
   -- end
+
 
   -- Wrath.
   if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
-    achievementFunctions.selectedCategory = storedCategoryID
 
+    -- Update the left side pane.
+    achievementFunctions.selectedCategory = storedCategoryID
     AchievementFrameCategories_Update()
+
+    -- Update the right window.
     if storedCategoryID == "summary" then
       AchievementFrame_ShowSubFrame(AchievementFrameSummary)
     else
       AchievementFrameAchievements_Update()
     end
 
+
+    if storedAchievementID then
+      AchievementFrame_SelectAchievement(storedAchievementID)
+    end
+
+
   -- Retail.
   else
+
+    -- Left side pane and right window are both updated by this.
     AchievementFrame_UpdateAndSelectCategory(storedCategoryID)
 
     if storedAchievementID then
@@ -52,6 +63,7 @@ AchievmentsBack = function()
     end
 
   end
+
 
   if next(history) == nil then
     backButton:Disable()
@@ -82,7 +94,7 @@ local function RememberLastState()
 
   tinsert(history, {lastAchievementID, lastAchievementTitle, lastCategoryID, lastCategoryTitle, lastCategoryParentID})
   -- for k, v in pairs(history) do
-    -- print ("  ", k, v[1], v[2], v[3])
+    -- print("  ", k, v[1], v[2], v[3], v[4], v[5])
   -- end
 
   backButton:Enable()
@@ -97,15 +109,52 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
 
     -- Wrath.
     if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+
       hooksecurefunc("AchievementFrameCategories_Update", function()
         if lastCategoryID ~= achievementFunctions.selectedCategory then
-          RememberLastState()
+
+          if lastCategoryChangeTime < GetTime() then
+            RememberLastState()
+          end
+
           lastCategoryID = achievementFunctions.selectedCategory
+          lastCategoryChangeTime = GetTime()
+
+          lastAchievementID = nil
         end
       end)
 
+      -- For Wrath Classic we can use this function for both,
+      -- jumping to an achievement and clicking on an achievement.
+      hooksecurefunc("AchievementButton_OnClick", function(button)
+        local achievementID = button.id
+        -- print(GetTime(), "AchievementButton_OnClick", achievementID)
+
+        -- When deselecting an achievement, the button.id is nil, which we are not interested in.
+        if achievementID and achievementID ~= lastAchievementID then
+
+          if lastCategoryChangeTime < GetTime() then
+            -- Do not remember, when comming from the same category with no achievement selected.
+            if lastCategoryID ~= GetAchievementCategory(achievementID) or lastAchievementID then
+              RememberLastState()
+            end
+          end
+
+          lastAchievementID = achievementID
+        end
+      end)
+
+
+      -- Not working in Classic...
+      -- local ScrollBar = AchievementFrameAchievementsContainer.scrollBar
+      -- ScrollBar:RegisterCallback(ScrollBar.Event.OnScroll, function(_,scrollpercent)
+        -- print(scrollpercent)
+      -- end)
+
+
       buttonParentFrame = AchievementFrameHeader
       buttonAnchorFrame = AchievementFrameHeaderPointBorder
+
 
     -- Retail.
     else
@@ -125,10 +174,11 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
         end
       end)
 
-
+      -- In Retail, we need this function for jumping to an achievement...
       hooksecurefunc("AchievementFrame_SelectAchievement", function(achievementID)
+
         -- print(GetTime(), "AchievementFrame_SelectAchievement", achievementID)
-        if lastAchievementID ~= achievementID then
+        if achievementID and achievementID ~= lastAchievementID then
 
           if lastCategoryChangeTime < GetTime() then
             RememberLastState()
@@ -138,17 +188,31 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
         end
       end)
 
+      -- ...and this funciton for clicking on an achievement.
+      hooksecurefunc(AchievementTemplateMixin, "ProcessClick", function()
+        local achievementID = AchievementFrameAchievements_GetSelectedAchievementId()
+        -- print("AchievementTemplateMixin.ProcessClick", achievementID)
 
-      -- TODO: Track clicked (expanded) achievements.
+        -- When deselecting an achievement, GetSelectedAchievementId() returns 0, which we are not interested in.
+        if achievementID and achievementID ~= 0 and achievementID ~= lastAchievementID then
+
+          if lastCategoryChangeTime < GetTime() then
+            -- Do not remember, when comming from the same category with no achievement selected.
+            if lastCategoryID ~= GetAchievementCategory(achievementID) or lastAchievementID then
+              RememberLastState()
+            end
+          end
+
+          lastAchievementID = achievementID
+        end
+
+      end)
+
 
       -- TODO: Track scroll position...
-
-      -- AchievementFrameAchievements.ScrollBox:HookScript("OnMouseWheel", function(self)
-        -- print(AchievementFrameAchievements.ScrollBox.scrollPercentage)
-      -- end)
-
-      -- AchievementFrameAchievements.ScrollBar:HookScript("OnMouseWheel", function(self)
-        -- print(AchievementFrameAchievements.ScrollBox.scrollPercentage)
+      -- local ScrollBar = AchievementFrameAchievements.ScrollBar
+      -- ScrollBar:RegisterCallback(ScrollBar.Event.OnScroll, function(_, scrollpercent)
+        -- print(scrollpercent)
       -- end)
 
 
@@ -183,4 +247,3 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
 
   end
 end)
-
