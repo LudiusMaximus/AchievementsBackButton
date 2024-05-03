@@ -7,6 +7,7 @@ local goingBackFlag = false
 local lastCategoryChangeTime = GetTime()
 local lastCategoryID = nil
 local lastCategoryScrollPosition = nil
+local lastCategoryCollapseState = {}
 
 local lastAchievementChangeTime = GetTime()
 local lastAchievementID = nil
@@ -25,22 +26,20 @@ AchievmentsBack = function()
   goingBackFlag = true
 
   -- Titles and category parent not needed yet. Maybe later for history drop down...
-  local _, storedAchievementID, _, storedCategoryID, _, _, storedAchievementsScrollPosition, storedCategoriesScrollPosition = unpack(tremove(history))
+  local _, storedAchievementID, _, storedCategoryID, _, _, storedAchievementsScrollPosition, storedCategoriesScrollPosition, storedCategoryCollapseState = unpack(tremove(history))
 
   -- for k, v in pairs(history) do
     -- print("  ", k, v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8])
   -- end
 
 
-
   -- ####################################################################
-  -- ### Wrath
+  -- ### Wrath, Cata
   -- ####################################################################
   if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
 
-    -- Update the left side pane.
+    -- Set category, which is also needed for the right window.
     achievementFunctions.selectedCategory = storedCategoryID
-    AchievementFrameCategories_Update()
 
     -- Update the right window.
     if storedCategoryID == "summary" then
@@ -49,11 +48,31 @@ AchievmentsBack = function()
       AchievementFrameAchievements_Update()
     end
 
-
     if storedAchievementID then
       AchievementFrame_SelectAchievement(storedAchievementID)
     end
-
+    
+    -- Update the left window including collapse states.
+    if type(storedCategoryCollapseState) == "table" then
+      for j, category in pairs(ACHIEVEMENTUI_CATEGORIES) do
+        if storedCategoryCollapseState[category.id] then
+          category.collapsed = storedCategoryCollapseState[category.id].collapsed
+          category.hidden = storedCategoryCollapseState[category.id].hidden
+        end
+      end
+      
+    end
+    AchievementFrameCategories_Update()
+    
+    -- Update scroll positions.
+    if storedCategoriesScrollPosition ~= nil then
+      -- print("Setting storedCategoriesScrollPosition", storedCategoriesScrollPosition)
+      AchievementFrameCategoriesContainer.scrollBar:SetValue(storedCategoriesScrollPosition)
+    end
+    if storedAchievementsScrollPosition ~= nil then
+      -- print("Setting storedAchievementsScrollPosition", storedAchievementsScrollPosition)
+      AchievementFrameAchievementsContainer.scrollBar:SetValue(storedAchievementsScrollPosition)
+    end
 
 
   -- ####################################################################
@@ -111,8 +130,18 @@ local function RememberLastState()
   end
 
   -- print(GetTime(), "Storing", lastAchievementID, lastAchievementTitle, lastCategoryID, lastCategoryTitle, lastCategoryParentID, lastAchievementScrollPosition, lastCategoryScrollPosition)
-
-  tinsert(history, {GetTime(), lastAchievementID, lastAchievementTitle, lastCategoryID, lastCategoryTitle, lastCategoryParentID, lastAchievementScrollPosition, lastCategoryScrollPosition})
+  
+  
+  -- Table copy.
+  local lastCategoryCollapseStateToInsert = {}
+  for k, v in pairs(lastCategoryCollapseState) do
+    lastCategoryCollapseStateToInsert[k] = {}
+    lastCategoryCollapseStateToInsert[k].collapsed = v.collapsed
+    lastCategoryCollapseStateToInsert[k].hidden = v.hidden
+  end
+    
+  tinsert(history, {GetTime(), lastAchievementID, lastAchievementTitle, lastCategoryID, lastCategoryTitle, lastCategoryParentID, lastAchievementScrollPosition, lastCategoryScrollPosition, lastCategoryCollapseStateToInsert})
+  
   -- for k, v in pairs(history) do
     -- print("  ", k, v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8])
   -- end
@@ -128,7 +157,7 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
     local buttonAnchorFrame = nil
 
     -- ####################################################################
-    -- ### Wrath
+    -- ### Wrath, Cata
     -- ####################################################################
     if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
 
@@ -137,18 +166,26 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
 
           RememberLastState()
 
-          lastCategoryID = achievementFunctions.selectedCategory
           lastCategoryChangeTime = GetTime()
-
+          lastCategoryID = achievementFunctions.selectedCategory
+          lastCategoryScrollPosition = AchievementFrameCategoriesContainer.scrollBar:GetValue()
+          
+          lastCategoryCollapseState = wipe(lastCategoryCollapseState) or {}
+          for j, category in pairs(ACHIEVEMENTUI_CATEGORIES) do
+            lastCategoryCollapseState[category.id] = {}
+            lastCategoryCollapseState[category.id].collapsed = category.collapsed
+            lastCategoryCollapseState[category.id].hidden = category.hidden
+          end
+          
           lastAchievementID = nil
         end
       end)
 
-      -- For Wrath Classic we can use this function for both,
+      -- For Wrath and Cata we can use this function for both,
       -- jumping to an achievement and clicking on an achievement.
-      hooksecurefunc("AchievementButton_OnClick", function(button)
-        local achievementID = button.id
-        -- print(GetTime(), "AchievementButton_OnClick", achievementID)
+      hooksecurefunc("AchievementFrameAchievements_Update", function()
+        local achievementID = AchievementFrameAchievements.selection
+        -- print(GetTime(), "AchievementFrameAchievements_Update", achievementID)
 
         -- When deselecting an achievement, the button.id is nil, which we are not interested in.
         if achievementID and achievementID ~= lastAchievementID then
@@ -160,16 +197,26 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
 
           lastAchievementChangeTime = GetTime()
           lastAchievementID = achievementID
+          lastAchievementScrollPosition = AchievementFrameAchievementsContainer.scrollBar:GetValue()
+          
         end
       end)
 
-
-      -- Not working in Classic...
-      -- local ScrollBar = AchievementFrameAchievementsContainer.scrollBar
-      -- ScrollBar:RegisterCallback(ScrollBar.Event.OnScroll, function(_,scrollpercent)
-        -- print(scrollpercent)
-      -- end)
-
+      AchievementFrameAchievementsContainer.scrollBar:HookScript("OnValueChanged", function(self, value)
+        -- print("achievementScrollBar", value)
+        if lastAchievementChangeTime == GetTime() and lastAchievementScrollPosition ~= value then
+          -- print(GetTime(), "Overriding lastAchievementScrollPosition", lastAchievementScrollPosition, "with", value)
+          lastAchievementScrollPosition = value
+        end
+      end)
+      
+      AchievementFrameCategoriesContainer.scrollBar:HookScript("OnValueChanged", function(self, value)
+        -- print("categoryScrollBar", value)
+        if (lastCategoryChangeTime == GetTime() or lastAchievementChangeTime == GetTime()) and lastCategoryScrollPosition ~= value then
+          -- print(GetTime(), "Overriding lastCategoryScrollPosition", lastCategoryScrollPosition, "with", value)
+          lastCategoryScrollPosition = value
+        end
+      end)
 
       buttonParentFrame = AchievementFrameHeader
       buttonAnchorFrame = AchievementFrameHeaderPointBorder

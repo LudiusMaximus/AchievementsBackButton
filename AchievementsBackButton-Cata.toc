@@ -1,0 +1,11 @@
+## Interface: 40400
+## Version: @project-version@
+## Title: Achievements Back Button
+## Author: LudiusMaximus
+## Notes: Adds a back button to the achievements frame that works like a browser history.
+## X-Curse-Project-ID: 1007342
+## X-WoWI-ID: 26723
+## X-Donate: PayPal:ludiusmaximus@gmail.com
+## X-License: The MIT License (MIT)
+
+main.lua
