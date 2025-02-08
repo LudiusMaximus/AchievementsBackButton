@@ -51,7 +51,7 @@ AchievmentsBack = function()
     if storedAchievementID then
       AchievementFrame_SelectAchievement(storedAchievementID)
     end
-    
+
     -- Update the left window including collapse states.
     if type(storedCategoryCollapseState) == "table" then
       for j, category in pairs(ACHIEVEMENTUI_CATEGORIES) do
@@ -60,10 +60,10 @@ AchievmentsBack = function()
           category.hidden = storedCategoryCollapseState[category.id].hidden
         end
       end
-      
+
     end
     AchievementFrameCategories_Update()
-    
+
     -- Update scroll positions.
     if storedCategoriesScrollPosition ~= nil then
       -- print("Setting storedCategoriesScrollPosition", storedCategoriesScrollPosition)
@@ -130,8 +130,8 @@ local function RememberLastState()
   end
 
   -- print(GetTime(), "Storing", lastAchievementID, lastAchievementTitle, lastCategoryID, lastCategoryTitle, lastCategoryParentID, lastAchievementScrollPosition, lastCategoryScrollPosition)
-  
-  
+
+
   -- Table copy.
   local lastCategoryCollapseStateToInsert = {}
   for k, v in pairs(lastCategoryCollapseState) do
@@ -139,9 +139,9 @@ local function RememberLastState()
     lastCategoryCollapseStateToInsert[k].collapsed = v.collapsed
     lastCategoryCollapseStateToInsert[k].hidden = v.hidden
   end
-    
+
   tinsert(history, {GetTime(), lastAchievementID, lastAchievementTitle, lastCategoryID, lastCategoryTitle, lastCategoryParentID, lastAchievementScrollPosition, lastCategoryScrollPosition, lastCategoryCollapseStateToInsert})
-  
+
   -- for k, v in pairs(history) do
     -- print("  ", k, v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8])
   -- end
@@ -169,14 +169,14 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
           lastCategoryChangeTime = GetTime()
           lastCategoryID = achievementFunctions.selectedCategory
           lastCategoryScrollPosition = AchievementFrameCategoriesContainer.scrollBar:GetValue()
-          
+
           lastCategoryCollapseState = wipe(lastCategoryCollapseState) or {}
           for j, category in pairs(ACHIEVEMENTUI_CATEGORIES) do
             lastCategoryCollapseState[category.id] = {}
             lastCategoryCollapseState[category.id].collapsed = category.collapsed
             lastCategoryCollapseState[category.id].hidden = category.hidden
           end
-          
+
           lastAchievementID = nil
         end
       end)
@@ -198,7 +198,7 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
           lastAchievementChangeTime = GetTime()
           lastAchievementID = achievementID
           lastAchievementScrollPosition = AchievementFrameAchievementsContainer.scrollBar:GetValue()
-          
+
         end
       end)
 
@@ -209,7 +209,7 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
           lastAchievementScrollPosition = value
         end
       end)
-      
+
       AchievementFrameCategoriesContainer.scrollBar:HookScript("OnValueChanged", function(self, value)
         -- print("categoryScrollBar", value)
         if (lastCategoryChangeTime == GetTime() or lastAchievementChangeTime == GetTime()) and lastCategoryScrollPosition ~= value then
@@ -311,8 +311,14 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
     backButton:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Down")
     backButton:SetDisabledTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Disabled")
     backButton:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
-    backButton:SetSize(29, 29)
-    backButton:SetPoint("LEFT", buttonAnchorFrame, "RIGHT", 10, 1)
+
+    if C_AddOns.IsAddOnLoaded("ElvUI") then
+      backButton:SetSize(25, 25)
+      backButton:SetPoint("BOTTOMLEFT", AchievementFrameAchievements, "TOPLEFT", -1, -3)
+    else
+      backButton:SetSize(29, 29)
+      backButton:SetPoint("LEFT", buttonAnchorFrame, "RIGHT", 10, 1)
+    end
 
     backButton:SetScript("OnClick", function()
         AchievmentsBack()
