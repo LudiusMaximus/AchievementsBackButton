@@ -16,7 +16,7 @@ local lastAchievementScrollPosition = nil
 local backButton = nil
 
 
-AchievmentsBack = function()
+local function AchievmentsBack()
 
   if next(history) == nil then
     return
@@ -281,7 +281,7 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
 
 
       local achievementScrollBar = AchievementFrameAchievements.ScrollBar
-      achievementScrollBar:RegisterCallback(achievementScrollBar.Event.OnScroll,function(_, scrollPercent)
+      achievementScrollBar:RegisterCallback(achievementScrollBar.Event.OnScroll, function(_, scrollPercent)
         -- print(GetTime(), "achievementScrollBar", scrollPercent)
         if lastAchievementChangeTime == GetTime() and lastAchievementScrollPosition ~= scrollPercent then
           -- print(GetTime(), "Overriding lastAchievementScrollPosition", lastAchievementScrollPosition, "with", scrollPercent)
@@ -290,7 +290,7 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
       end)
 
       local categoryScrollBar = AchievementFrameCategories.ScrollBar
-      categoryScrollBar:RegisterCallback(categoryScrollBar.Event.OnScroll,function(_, scrollPercent)
+      categoryScrollBar:RegisterCallback(categoryScrollBar.Event.OnScroll, function(_, scrollPercent)
         -- print(GetTime(), "categoryScrollBar", scrollPercent)
         if (lastCategoryChangeTime == GetTime() or lastAchievementChangeTime == GetTime()) and lastCategoryScrollPosition ~= scrollPercent then
           -- print(GetTime(), "Overriding lastCategoryScrollPosition", lastCategoryScrollPosition, "with", scrollPercent)
