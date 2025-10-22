@@ -315,7 +315,7 @@ hooksecurefunc("UIParentLoadAddOn", function(name)
     if C_AddOns.IsAddOnLoaded("ElvUI") then
       backButton:SetSize(25, 25)
       if C_AddOns.IsAddOnLoaded("Krowi_AchievementFilter") then
-        backButton:SetPoint("RIGHT", AchievementFrameFilterDropdown, "LEFT", -5, -1)
+        backButton:SetPoint("BOTTOMRIGHT", AchievementFrameCategories, "TOPRIGHT", 0, -1)
       else
         backButton:SetPoint("BOTTOMLEFT", AchievementFrameAchievements, "TOPLEFT", -1, -3)
       end
