@@ -39,3 +39,7 @@ The button positions itself correctly alongside **ElvUI**'s achievement skin.
 
 Bug reports and suggestions are very welcome. If something does not work together with another addon you are using, please say which one. That is usually enough for me to fix it.
 
+## Acknowledgements
+
+Inspired by and dedicated to Taliesin:  
+[https://www.youtube.com/watch?v=H8fVzxmEiOA&t=64s](https://www.youtube.com/watch?v=H8fVzxmEiOA&t=64s)
