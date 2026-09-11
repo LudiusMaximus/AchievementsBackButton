@@ -31,7 +31,9 @@ Blizzard has only added a back button to Retail so far. On Classic there is no b
 
 ## Compatibility
 
-The button positions itself correctly alongside **ElvUI**'s achievement skin and **Krowi's Achievement Filter**.
+The button positions itself correctly alongside **ElvUI**'s achievement skin.
+
+**Krowi's Achievement Filter** is not compatible, and does not need to be. It rebuilds the achievements frame from the ground up, which leaves this addon unable to see which achievement or category you are looking at, and it already comes with a browsing history of its own that has both a back and a forward button. Achievements Back Button notices when it is enabled and stays out of its way, so you can leave both installed and simply use Krowi's buttons.
 
 ## Feedback
 
